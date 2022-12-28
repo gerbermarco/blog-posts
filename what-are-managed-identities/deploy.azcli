@@ -1,0 +1,15 @@
+# Variables
+$location = "westeurope"
+$tenantName = "Your tenant name or id"
+$targetSubscriptionId = "Your target subscription"
+$resourceGroupName = "Your resoure group name"
+
+# Login to Azure
+az login --tenant $tenantName
+az account set --subscription $targetSubscriptionId
+
+# Create resource group
+az group create --location $location --name $resourceGroupName
+
+# Deploy main.bicep to Azure
+az deployment group create --resource-group $resourceGroupName --template-file main.bicep
