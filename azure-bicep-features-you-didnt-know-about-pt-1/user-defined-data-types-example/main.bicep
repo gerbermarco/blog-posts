@@ -101,5 +101,7 @@ type storageAccountDefinition = {
 
   @description('Allow or disallow public access to all blobs or containers in the storage account.')
   allowBlobPublicAccess: bool
+
+  @description('Allows https traffic only to storage service if sets to true.')
   supportsHttpsTrafficOnly: bool
 }
