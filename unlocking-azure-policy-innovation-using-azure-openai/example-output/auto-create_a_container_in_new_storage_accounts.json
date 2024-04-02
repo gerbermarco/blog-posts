@@ -1,0 +1,59 @@
+
+{
+    "properties": {
+        "displayName": "Auto-create a container in new storage accounts",
+        "description": "This policy ensures that a specified container is automatically created in each newly created storage account.",
+        "parameters": {
+            "containerName": {
+                "type": "String",
+                "metadata": {
+                    "displayName": "Container Name",
+                    "description": "The name of the container to create in new storage accounts."
+                }
+            }
+        },
+        "policyRule": {
+            "if": {
+                "field": "type",
+                "equals": "Microsoft.Storage/storageAccounts"
+            },
+            "then": {
+                "effect": "deployIfNotExists",
+                "details": {
+                    "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+                    "existenceCondition": {
+                        "field": "Microsoft.Storage/storageAccounts/blobServices/containers/name",
+                        "equals": "[parameters('containerName')]"
+                    },
+                    "roleDefinitionIds": [
+                        "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+                    ],
+                    "deployment": {
+                        "properties": {
+                            "mode": "incremental",
+                            "template": {
+                                "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                                "contentVersion": "1.0.0.0",
+                                "resources": [
+                                    {
+                                        "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+                                        "apiVersion": "2019-06-01",
+                                        "name": "[concat(variables('storageAccountId'), '/default/', parameters('containerName'))]",
+                                        "properties": {}
+                                    }
+                                ],
+                                "variables": {
+                                    "storageAccountId": "[substring(resourceId('Microsoft.Storage/storageAccounts', field('name')), 0, indexOf(resourceId('Microsoft.Storage/storageAccounts', field('name')), '/blobServices'))]"
+                                }
+                            },
+                            "parameters": {}
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "type": "Microsoft.Authorization/policyDefinitions",
+    "name": "auto-create-container-in-storage-accounts",
+    "category": "Storage"
+}

@@ -1,0 +1,103 @@
+
+{
+    "properties": {
+        "displayName": "Enable backup on new file shares",
+        "description": "This policy automatically enables backup for each new file share that gets created, with an option to exclude a storage account by a custom tag and value.",
+        "policyType": "Custom",
+        "mode": "Indexed",
+        "category": "Storage",
+        "parameters": {
+            "tagName": {
+                "type": "String",
+                "metadata": {
+                    "displayName": "Tag Name",
+                    "description": "Name of the tag based on which to exclude storage accounts from applying this policy."
+                }
+            },
+            "tagValue": {
+                "type": "String",
+                "metadata": {
+                    "displayName": "Tag Value",
+                    "description": "Value of the tag based on which to exclude storage accounts from applying this policy."
+                }
+            }
+        },
+        "policyRule": {
+            "if": {
+                "allOf": [
+                    {
+                        "field": "type",
+                        "equals": "Microsoft.Storage/storageAccounts/fileServices/shares"
+                    },
+                    {
+                        "field": "[concat('tags[', parameters('tagName'), ']')]",
+                        "notEquals": "[parameters('tagValue')]"
+                    }
+                ]
+            },
+            "then": {
+                "effect": "deployIfNotExists",
+                "details": {
+                    "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+                    "existenceCondition": {
+                        "field": "Microsoft.RecoveryServices/vaults/backupPolicies/backupManagementType",
+                        "equals": "AzureStorage"
+                    },
+                    "roleDefinitionIds": [
+                        "/providers/Microsoft.Authorization/roleDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    ],
+                    "deployment": {
+                        "properties": {
+                            "mode": "incremental",
+                            "template": {
+                                "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                                "contentVersion": "1.0.0.0",
+                                "resources": [
+                                    {
+                                        "apiVersion": "2016-06-01",
+                                        "type": "Microsoft.RecoveryServices/vaults",
+                                        "name": "[concat('BackupVault', uniqueString(resourceGroup().id))]",
+                                        "location": "[resourceGroup().location]",
+                                        "properties": {}
+                                    },
+                                    {
+                                        "apiVersion": "2019-05-13",
+                                        "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
+                                        "name": "[concat('BackupVault', uniqueString(resourceGroup().id), '/Azure/', 'StorageContainer', '/AzureFileShare', parameters('fileShareName'))]",
+                                        "location": "[resourceGroup().location]",
+                                        "properties": {
+                                            "protectedItemType": "AzureFileShare",
+                                            "sourceResourceId": "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', parameters('storageAccountName'), parameters('fileShareName'))]",
+                                            "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', concat('BackupVault', uniqueString(resourceGroup().id)), 'DefaultPolicy')]"
+                                        },
+                                        "dependsOn": [
+                                            "[concat('Microsoft.RecoveryServices/vaults/', 'BackupVault', uniqueString(resourceGroup().id))]"
+                                        ]
+                                    }
+                                ],
+                                "parameters": {
+                                    "storageAccountName": {
+                                        "type": "string"
+                                    },
+                                    "fileShareName": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "parameters": {
+                                "storageAccountName": {
+                                    "value": "[field('Microsoft.Storage/storageAccounts/name')]"
+                                },
+                                "fileShareName": {
+                                    "value": "[field('Microsoft.Storage/storageAccounts/fileServices/shares/name')]"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "type": "Microsoft.Authorization/policyDefinitions",
+    "name": "enable-backup-on-new-file-shares"
+}

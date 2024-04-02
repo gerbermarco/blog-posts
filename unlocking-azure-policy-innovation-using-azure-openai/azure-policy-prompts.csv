@@ -1,0 +1,4 @@
+category;prompt
+Key Vault;Create an azure policy definition that automatically deploys an azure key vault when a resource group is created. The key vault will be created in the same newly created resource group. Append "-kva" to the name of the resource group for the keyvault name.
+Storage;Create an azure policy that automatically creates a container inside a storage account for each newly created storage account. create a parameter for the container name.
+Storage;Create an azure policy that automatically enables backup for each new file share that gets created. Add all necessary parameters. Add a possibility to exclude a storage account by a custom tag and value.

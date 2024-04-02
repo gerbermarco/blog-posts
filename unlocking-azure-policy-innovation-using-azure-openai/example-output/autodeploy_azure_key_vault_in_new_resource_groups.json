@@ -1,0 +1,80 @@
+
+{
+  "properties": {
+    "displayName": "Autodeploy Azure Key Vault in new Resource Groups",
+    "description": "This policy deploys an Azure Key Vault in the same resource group when a new resource group is created, appending '-kva' to the resource group name for the Key Vault.",
+    "policyType": "Custom",
+    "mode": "All",
+    "category": "Key Vault",
+    "metadata": {
+      "version": "1.0.0",
+      "category": "Key Vault"
+    },
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "field": "type",
+            "equals": "Microsoft.Resources/subscriptions/resourceGroups"
+          },
+          {
+            "field": "location",
+            "equals": "[deployment().location]"
+          }
+        ]
+      },
+      "then": {
+        "effect": "deployIfNotExists",
+        "details": {
+          "type": "Microsoft.KeyVault/vaults",
+          "existenceCondition": {
+            "field": "name",
+            "equals": "[concat(field('name'), '-kva')]"
+          },
+          "roleDefinitionIds": [
+            "/providers/microsoft.authorization/roleDefinitions/00000000-0000-0000-0000-000000000000"
+          ],
+          "deployment": {
+            "properties": {
+              "mode": "incremental",
+              "template": {
+                "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "resources": [
+                  {
+                    "type": "Microsoft.KeyVault/vaults",
+                    "apiVersion": "2019-09-01",
+                    "name": "[concat(parameters('resourceGroupName'), '-kva')]",
+                    "location": "[resourceGroup().location]",
+                    "properties": {
+                      "sku": {
+                        "family": "A",
+                        "name": "standard"
+                      },
+                      "tenantId": "[subscription().tenantId]",
+                      "accessPolicies": []
+                    }
+                  }
+                ],
+                "parameters": {
+                  "resourceGroupName": {
+                    "type": "string",
+                    "metadata": {
+                      "description": "The name of the resource group to which the Key Vault will be deployed."
+                    }
+                  }
+                }
+              },
+              "parameters": {
+                "resourceGroupName": {
+                  "value": "[field('name')]"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
