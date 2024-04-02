@@ -57,7 +57,6 @@ def generate_policy(category, prompt, model, client):
 
     # Remove code formatting
     json_formatted = response.choices[0].message.content.replace("```json", "").replace("```", "")
-    print(json_formatted)
 
     # Parse the JSON data to get the display name
     json_definition = json.loads(json_formatted)
